@@ -1,13 +1,13 @@
-# t3sidebar
+# T3 Sidebar
 
 An inbox-style replacement for bb's sidebar thread list, and the reference
 example for `app.slots.experimental_threadList`.
 
-This plugin is an example. BB does not bundle it or list it in the official
-plugin catalog. Install it from a BB checkout:
+This plugin started as an example in the BB repository. Install its public
+release from GitHub:
 
 ```sh
-bb plugin install ./examples/plugins/t3sidebar
+bb plugin install git:https://github.com/SawyerHood/bb-plugin-t3sidebar.git@^0.1.0
 ```
 
 Turn it on in **Settings → Appearance → Sidebar**. bb's own list stays the

@@ -12,7 +12,7 @@ import { SubagentsChip } from "./src/SubagentsChip";
 export default definePluginApp((app) => {
   app.slots.experimental_threadList({
     id: "inbox",
-    title: "t3sidebar (inbox)",
+    title: "T3 Sidebar",
     description: "One flat list of cards, newest first, that never re-orders.",
     component: ThreadInbox,
   });

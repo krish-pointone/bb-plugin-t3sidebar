@@ -28,10 +28,10 @@ export interface LifecycleApi {
   shelfFor(thread: PluginSidebarThread): ThreadShelf;
   canPark(thread: PluginSidebarThread): boolean;
   wakeAtFor(thread: PluginSidebarThread): number | null;
-  settle(threadId: string): void;
-  unsettle(threadId: string): void;
-  snooze(threadId: string, snoozedUntil: number): void;
-  unsnooze(threadId: string): void;
+  settle(threadId: string): Promise<void>;
+  unsettle(threadId: string): Promise<void>;
+  snooze(threadId: string, snoozedUntil: number): Promise<void>;
+  unsnooze(threadId: string): Promise<void>;
 }
 
 /**
@@ -107,11 +107,11 @@ export function useLifecycle(
         resolveShelf(rows.get(thread.id), signalsFor(thread), now),
       canPark: (thread) => canPark(signalsFor(thread)),
       wakeAtFor: (thread) => rows.get(thread.id)?.snoozedUntil ?? null,
-      settle: (threadId) => void mutate("settle", threadId),
-      unsettle: (threadId) => void mutate("unsettle", threadId),
-      unsnooze: (threadId) => void mutate("unsnooze", threadId),
-      snooze: (threadId, snoozedUntil) => {
-        void rpc.call("snooze", { threadId, snoozedUntil });
+      settle: (threadId) => mutate("settle", threadId),
+      unsettle: (threadId) => mutate("unsettle", threadId),
+      unsnooze: (threadId) => mutate("unsnooze", threadId),
+      snooze: async (threadId, snoozedUntil) => {
+        await rpc.call("snooze", { threadId, snoozedUntil });
       },
     };
   }, [now, refresh, rows, rpc]);

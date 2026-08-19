@@ -2,6 +2,7 @@ import {
   experimental_useSidebarThreadActions as useSidebarThreadActions,
   type PluginSidebarThread,
 } from "@get-bb/plugin-sdk/app";
+import { useRef, useState } from "react";
 import { Icon } from "./components/Icon";
 import { cn } from "./lib/utils";
 import { RowContextMenu } from "./RowContextMenu";
@@ -24,6 +25,7 @@ export function SlimRow({
   now,
   onNavigate,
   onRestore,
+  onRename,
 }: {
   thread: PluginSidebarThread;
   isActive: boolean;
@@ -32,9 +34,43 @@ export function SlimRow({
   now: number;
   onNavigate: () => void;
   onRestore: () => void;
+  onRename: (title: string) => Promise<void>;
 }) {
   const actions = useSidebarThreadActions();
   const title = threadDisplayTitle(thread);
+  const [renaming, setRenaming] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(title);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const savingRename = useRef(false);
+
+  const beginRename = () => {
+    setTitleDraft(title);
+    setRenameError(null);
+    setRenaming(true);
+  };
+  const saveRename = async () => {
+    const nextTitle = titleDraft.trim();
+    if (savingRename.current) return;
+    if (!nextTitle) {
+      setRenameError("Thread name cannot be empty");
+      return;
+    }
+    if (nextTitle === title) {
+      setRenaming(false);
+      return;
+    }
+    savingRename.current = true;
+    try {
+      await onRename(nextTitle);
+      setRenaming(false);
+    } catch (cause) {
+      setRenameError(
+        cause instanceof Error ? cause.message : "Could not rename thread",
+      );
+    } finally {
+      savingRename.current = false;
+    }
+  };
 
   return (
     <RowContextMenu thread={thread}>
@@ -50,6 +86,7 @@ export function SlimRow({
             data-sidebar-thread-id={thread.id}
             href="#"
             aria-label={title}
+            title="Double-click or press F2 to rename"
             onClick={(event) => {
               event.preventDefault();
               actions.open(thread.id, {
@@ -57,17 +94,79 @@ export function SlimRow({
               });
               onNavigate();
             }}
-            className="absolute inset-0 cursor-pointer rounded-md"
+            onDoubleClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              beginRename();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "F2") {
+                event.preventDefault();
+                beginRename();
+                return;
+              }
+              if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+              const root = event.currentTarget.closest("[data-t3-sidebar-root]");
+              if (!root) return;
+              const targets = Array.from(
+                root.querySelectorAll<HTMLElement>(
+                  "[data-sidebar-thread-shortcut-target]",
+                ),
+              );
+              const currentIndex = targets.indexOf(event.currentTarget);
+              const next =
+                targets[currentIndex + (event.key === "ArrowUp" ? -1 : 1)];
+              if (!next) return;
+              event.preventDefault();
+              next.focus();
+            }}
+            className="absolute inset-0 cursor-pointer rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
           />
-          <span
-            className={cn(
-              "pointer-events-none relative min-w-0 flex-1 truncate",
-              isActive ? "text-foreground" : "text-muted-foreground/70",
-              "group-hover/slim:text-foreground",
-            )}
-          >
-            {title}
-          </span>
+          {renaming ? (
+            <form
+              className="relative min-w-0 flex-1"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveRename();
+              }}
+            >
+              <input
+                autoFocus
+                aria-label={`Rename ${title}`}
+                aria-invalid={renameError ? true : undefined}
+                title={renameError ?? undefined}
+                value={titleDraft}
+                maxLength={500}
+                onFocus={(event) => event.currentTarget.select()}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onBlur={() => void saveRename()}
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    setRenaming(false);
+                    setRenameError(null);
+                  }
+                }}
+                className={cn(
+                  "h-6 w-full rounded border bg-background px-1.5 text-xs text-foreground outline-none",
+                  renameError
+                    ? "border-destructive focus:border-destructive"
+                    : "border-sidebar-border focus:border-ring",
+                )}
+              />
+            </form>
+          ) : (
+            <span
+              className={cn(
+                "pointer-events-none relative min-w-0 flex-1 truncate",
+                isActive ? "text-foreground" : "text-muted-foreground/70",
+                "group-hover/slim:text-foreground",
+              )}
+            >
+              {title}
+            </span>
+          )}
           {/* The same slot as a card, so a shelf keeps the card's column. A
               snoozed row spends it on the wake time: when the thread comes
               BACK is that shelf's whole question, and it outranks an age the

@@ -3,20 +3,19 @@
 An inbox-style replacement for bb's sidebar thread list, and the reference
 example for `app.slots.experimental_threadList`.
 
-This plugin started as an example in the BB repository. Install its public
-release from GitHub:
+This plugin started as an example in the BB repository. Install it from GitHub:
 
 ```sh
-bb plugin install git:https://github.com/SawyerHood/bb-plugin-t3sidebar.git@^0.1.0
+bb plugin install git:https://github.com/krish-pointone/bb-plugin-t3sidebar.git@main
 ```
 
 Turn it on in **Settings → Appearance → Sidebar**. bb's own list stays the
 default, and comes back the moment you switch away or disable this plugin.
 
 The plugin replaces the scrolling list only. bb's New-thread button, search
-field, plugin nav rows, and footer stay exactly where they are — this list
-filters by the host's search and adds just one control of its own, a project
-scope picker.
+field, plugin nav rows, and footer stay exactly where they are. This list
+filters by the host's search and adds a project scope picker plus thread
+folders.
 
 ## The idea
 
@@ -42,6 +41,27 @@ Three shelves:
 - **Snoozed** — hidden until a wake time you chose. A snoozed thread comes
   back early if it starts working or asks you something.
 - **Settled** — work you are done with, collapsed to one line each.
+
+## Sidebar folders
+
+Create a folder from the folder button beside the project picker. Folders are
+collapsible, show their thread count, and can be renamed or deleted from the
+actions on their header. The **+** button opens a full-page version of bb's
+native composer and creates the submitted thread directly in that folder.
+The composer page includes a color-aware thread-group picker, so the destination
+can be changed before submitting.
+Click a folder's colored icon to choose a quick preset,
+pick any RGB color, or enter an exact hex value; each expanded folder is one continuous tinted
+surface from its header through the full indentation gutter and thread rows.
+Drag an active thread card from anywhere on its surface onto a folder to assign it.
+Drag it onto **Unfiled** to remove the assignment. Deleting a folder keeps its
+threads and moves them back to Unfiled.
+
+Folders and assignments use bb's native thread-section APIs, so organization
+is durable and understood outside this plugin. Settled and snoozed threads
+stay on their dedicated hidden shelves instead of appearing in folders. Folder
+colors are T3 Sidebar presentation metadata; the native folder and membership
+remain available when the built-in sidebar is selected.
 
 ## Child threads live in the header
 
@@ -70,10 +90,12 @@ header shows no parent chip.
 | `experimental_threadHeaderAction`                  | the two header chips: children on a parent, and the way back on a child                     |
 | `experimental_useSidebarThreads`                   | live threads and projects, from the host's own cache                                        |
 | `experimental_useSidebarThreadActions`             | open, open-in-split, new thread                                                             |
-| `experimental_useSidebarThreadSplit`               | dragging a card out to a split pane                                                         |
+| `experimental_NewThreadComposer`                   | bb's full new-thread composer inside the folder-create dialog                               |
+| `experimental_useSidebarThreadSplit`               | recognizing threads already shown in another split pane                                     |
 | `experimental_useSidebarThreadPullRequest`         | the `#412` badge, coloured by bb's attention state                                          |
 | `@radix-ui/react-context-menu` (shimmed)           | this plugin's own right-click menu, built on the action hook                                |
 | `bb.storage.database()` + `bb.rpc` + `bb.realtime` | the settled/snoozed store                                                                   |
+| `bb.sdk.threadSections` + `bb.sdk.threads`         | native folders, durable assignment, and atomic create-in-folder                            |
 
 The plugin API ships **no components**. Status glyphs and the right-click menu
 are both this plugin's own: `indicator` arrives as data, and every menu item is

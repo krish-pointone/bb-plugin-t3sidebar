@@ -8,12 +8,21 @@ import { definePluginApp } from "@get-bb/plugin-sdk/app";
 import { ThreadInbox } from "./src/ThreadInbox";
 import { ParentChip } from "./src/ParentChip";
 import { SubagentsChip } from "./src/SubagentsChip";
+import { FolderThreadComposerPage } from "./src/FolderThreadComposerPage";
 
 export default definePluginApp((app) => {
+  app.slots.navPanel({
+    id: "folder-new-thread",
+    title: "New thread in folder",
+    icon: "Add",
+    path: "folder-new-thread",
+    component: FolderThreadComposerPage,
+  });
+
   app.slots.experimental_threadList({
     id: "inbox",
     title: "T3 Sidebar",
-    description: "One flat list of cards, newest first, that never re-orders.",
+    description: "Stable thread cards organized into collapsible folders.",
     component: ThreadInbox,
   });
 
